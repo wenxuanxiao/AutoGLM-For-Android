@@ -85,9 +85,12 @@
     <color name="ripple_color">#1A7BA4DB</color>
     <color name="overlay_light">#0A7BA4DB</color>
     
-    <!-- Keyboard Colors -->
+<!-- Keyboard Colors -->
     <color name="keyboard_background">#FF1A1A1A</color>
     <color name="keyboard_text">#FFFFFFFF</color>
     <color name="keyboard_status_text">#FF81C784</color>
     <color name="keyboard_hint_text">#FF888888</color>
+
+    <!-- Badge Color -->
+    <color name="badge_color">#FFEF5350</color>
 </resources>

@@ -24,6 +24,7 @@ import com.kevinluo.autoglm.action.AgentAction
 import com.kevinluo.autoglm.agent.PhoneAgent
 import com.kevinluo.autoglm.agent.PhoneAgentListener
 import com.kevinluo.autoglm.settings.SettingsActivity
+import com.kevinluo.autoglm.scheduled.ScheduledTaskManager
 import com.kevinluo.autoglm.ui.FloatingWindowService
 import com.kevinluo.autoglm.ui.TaskStatus
 import com.kevinluo.autoglm.util.Logger
@@ -60,6 +61,8 @@ class MainActivity : AppCompatActivity(), PhoneAgentListener {
     private lateinit var requestPermissionBtn: Button
     private lateinit var openShizukuBtn: Button
     private lateinit var settingsBtn: ImageButton
+    private lateinit var scheduledTasksBtn: ImageButton
+    private lateinit var scheduledTasksBadge: TextView
 
     // Overlay permission views
     private lateinit var overlayPermissionCard: View
@@ -228,16 +231,34 @@ class MainActivity : AppCompatActivity(), PhoneAgentListener {
         }
     }
 
+    /**
+     * Updates the scheduled tasks badge count.
+     */
+    private fun updateScheduledTasksBadge() {
+        val manager = ScheduledTaskManager.getInstance(this)
+        val enabledCount = manager.getEnabledTasks().size
+
+        if (enabledCount > 0) {
+            scheduledTasksBadge.text = enabledCount.toString()
+            scheduledTasksBadge.visibility = View.VISIBLE
+        } else {
+            scheduledTasksBadge.visibility = View.GONE
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         Logger.d(TAG, "onResume - checking for settings changes")
-        
+
         // Update overlay permission status (user may have granted it)
         updateOverlayPermissionStatus()
-        
+
         // Update keyboard status (user may have enabled it)
         updateKeyboardStatus()
-        
+
+        // Update scheduled tasks badge
+        updateScheduledTasksBadge()
+
         // Re-setup floating window callbacks if service is running
         FloatingWindowService.getInstance()?.let { service ->
             service.setStopTaskCallback {
@@ -316,6 +337,8 @@ class MainActivity : AppCompatActivity(), PhoneAgentListener {
         requestPermissionBtn = findViewById(R.id.requestPermissionBtn)
         openShizukuBtn = findViewById(R.id.openShizukuBtn)
         settingsBtn = findViewById(R.id.settingsBtn)
+        scheduledTasksBtn = findViewById(R.id.scheduledTasksBtn)
+        scheduledTasksBadge = findViewById(R.id.scheduledTasksBadge)
 
         // Overlay permission views
         overlayPermissionCard = findViewById(R.id.overlayPermissionCard)
@@ -362,6 +385,11 @@ class MainActivity : AppCompatActivity(), PhoneAgentListener {
         // Settings button
         settingsBtn.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        // Scheduled Tasks button
+        scheduledTasksBtn.setOnClickListener {
+            startActivity(Intent(this, com.kevinluo.autoglm.scheduled.ScheduledTasksActivity::class.java))
         }
 
         // History button

@@ -7,6 +7,8 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.kevinluo.autoglm.agent.AgentConfig
 import com.kevinluo.autoglm.model.ModelConfig
+import com.kevinluo.autoglm.scheduled.RepeatType
+import com.kevinluo.autoglm.scheduled.ScheduledTask
 import com.kevinluo.autoglm.util.Logger
 import org.json.JSONArray
 import org.json.JSONObject
@@ -688,5 +690,66 @@ class SettingsManager(private val context: Context) {
             Logger.e(TAG, "Failed to import dev profiles", e)
             -1
         }
+    }
+
+    // ==================== Scheduled Tasks ====================
+
+    private const val KEY_SCHEDULED_TASKS = "scheduled_tasks"
+
+    fun getScheduledTasks(): List<ScheduledTask> {
+        val json = prefs.getString(KEY_SCHEDULED_TASKS, null) ?: return emptyList()
+        return try {
+            val array = JSONArray(json)
+            (0 until array.length()).mapNotNull { i ->
+                val obj = array.getJSONObject(i)
+                ScheduledTask.fromJson(obj.toString())
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to parse scheduled tasks", e)
+            emptyList()
+        }
+    }
+
+    fun saveScheduledTask(task: ScheduledTask) {
+        Logger.d(TAG, "Saving scheduled task: id=${task.id}, name=${task.name}")
+        val tasks = getScheduledTasks().toMutableList()
+        val existingIndex = tasks.indexOfFirst { it.id == task.id }
+
+        if (existingIndex >= 0) {
+            tasks[existingIndex] = task
+        } else {
+            tasks.add(task)
+        }
+
+        saveScheduledTasksList(tasks)
+    }
+
+    fun deleteScheduledTask(taskId: String) {
+        Logger.d(TAG, "Deleting scheduled task: id=$taskId")
+        val tasks = getScheduledTasks().filter { it.id != taskId }
+        saveScheduledTasksList(tasks)
+    }
+
+    fun getScheduledTaskById(taskId: String): ScheduledTask? {
+        return getScheduledTasks().find { it.id == taskId }
+    }
+
+    fun generateScheduledTaskId(): String {
+        return "scheduled_${System.currentTimeMillis()}"
+    }
+
+    private fun saveScheduledTasksList(tasks: List<ScheduledTask>) {
+        val array = JSONArray()
+        tasks.forEach { task ->
+            val json = task.toJson()
+            if (json != null) {
+                try {
+                    array.put(JSONObject(json))
+                } catch (e: Exception) {
+                    Logger.e(TAG, "Failed to convert task to JSON", e)
+                }
+            }
+        }
+        prefs.edit().putString(KEY_SCHEDULED_TASKS, array.toString()).apply()
     }
 }

@@ -2,11 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+<uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Query all installed packages (required for Android 11+) -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
@@ -50,10 +53,15 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
-        <activity
+<activity
             android:name=".history.HistoryDetailActivity"
             android:exported="false"
             android:parentActivityName=".history.HistoryActivity" />
+
+        <activity
+            android:name=".scheduled.ScheduledTasksActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
@@ -105,7 +113,7 @@
             android:taskAffinity=""
             android:launchMode="singleInstance" />
 
-        <!-- AutoGLM Keyboard Input Method Service -->
+<!-- AutoGLM Keyboard Input Method Service -->
         <service
             android:name=".input.AutoGLMKeyboardService"
             android:exported="true"
@@ -118,6 +126,24 @@
                 android:name="android.view.im"
                 android:resource="@xml/method_autoglm" />
         </service>
+
+        <!-- Scheduled Task Receiver -->
+        <receiver
+            android:name=".scheduled.ScheduledTaskReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.kevinluo.autoglm.scheduled.TASK_TRIGGER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Boot Completed Receiver to reschedule tasks -->
+        <receiver
+            android:name=".scheduled.BootCompletedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

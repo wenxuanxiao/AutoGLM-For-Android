@@ -216,10 +216,55 @@
     <string name="settings_logs_empty">暂无日志</string>
     <string name="settings_clear_logs_confirm">确定要清空所有日志吗？</string>
     
-    <!-- AutoGLM Keyboard -->
+<!-- AutoGLM Keyboard -->
     <string name="keyboard_name">AutoGLM Keyboard</string>
     <string name="keyboard_status_ready">就绪</string>
     <string name="keyboard_hint">文本输入由 AutoGLM 控制</string>
     <string name="keyboard_settings_title">AutoGLM 键盘</string>
     <string name="keyboard_settings_subtitle">已启用</string>
+
+    <!-- Scheduled Tasks -->
+    <string name="scheduled_tasks_title">定时任务</string>
+    <string name="scheduled_task_add">添加任务</string>
+    <string name="scheduled_task_edit">编辑任务</string>
+    <string name="scheduled_task_delete">删除任务</string>
+    <string name="scheduled_task_name">任务名称</string>
+    <string name="scheduled_task_description">任务描述</string>
+    <string name="scheduled_task_select_template">选择模板</string>
+    <string name="scheduled_task_time">执行时间</string>
+    <string name="scheduled_task_repeat">重复类型</string>
+    <string name="scheduled_task_repeat_once">仅一次</string>
+    <string name="scheduled_task_repeat_daily">每天</string>
+    <string name="scheduled_task_repeat_weekly">每周</string>
+    <string name="scheduled_task_weekdays">星期</string>
+    <string name="scheduled_task_enabled">启用任务</string>
+    <string name="scheduled_task_next_execute">下次执行</string>
+    <string name="scheduled_task_empty">暂无定时任务</string>
+    <string name="scheduled_task_empty_hint">点击右下角添加</string>
+    <string name="scheduled_task_delete_confirm">确定要删除此定时任务吗？</string>
+    <string name="scheduled_task_saved">任务已保存</string>
+    <string name="scheduled_task_deleted">任务已删除</string>
+    <string name="scheduled_task_disabled">任务已禁用</string>
+    <string name="scheduled_task_enabled_success">任务已启用</string>
+    <string name="scheduled_task_validation_name_empty">请输入任务名称</string>
+    <string name="scheduled_task_validation_desc_empty">请输入任务描述</string>
+    <string name="scheduled_task_validation_weekdays_empty">请选择至少一个星期</string>
+    <string name="scheduled_task_next_format">下次: %s</string>
+
+    <!-- Weekday Short Names -->
+    <string name="weekday_1">一</string>
+    <string name="weekday_2">二</string>
+    <string name="weekday_3">三</string>
+    <string name="weekday_4">四</string>
+    <string name="weekday_5">五</string>
+    <string name="weekday_6">六</string>
+    <string name="weekday_7">日</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_task">定时任务</string>
+    <string name="notification_task_starting">开始执行</string>
+    <string name="notification_task_success">执行成功</string>
+    <string name="notification_task_failed">执行失败</string>
+    <string name="notification_task_no_shizuku">Shizuku 未连接，任务暂缓</string>
+    <string name="notification_task_running">定时任务执行中</string>
 </resources>
