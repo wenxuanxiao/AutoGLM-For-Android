@@ -68,9 +68,10 @@
     <color name="button_secondary_text">#FF7BA4DB</color>
     <color name="button_outlined_stroke">#FF7BA4DB</color>
     
-    <!-- Text Colors -->
+<!-- Text Colors -->
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#FFB0B0B0</color>
+    <color name="text_tertiary">#FF707070</color>
     <color name="text_hint">#FF707070</color>
     
     <!-- Icon Colors -->
