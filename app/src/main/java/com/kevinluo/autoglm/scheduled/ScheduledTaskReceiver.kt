@@ -10,7 +10,6 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "ScheduledTaskReceiver"
-        const val ACTION_TASK_TRIGGER = "com.kevinluo.autoglm.scheduled.TASK_TRIGGER"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -32,20 +31,16 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
         }
 
         if (!task.isEnabled) {
-            Logger.d(TAG, "Task is disabled, skipping: ${task.name}")
+            Logger.d(TAG, "Task is disabled")
             return
         }
 
         if (Shizuku.isBinding()) {
-            Logger.d(TAG, "Shizuku is available, executing task: ${task.name}")
+            Logger.d(TAG, "Shizuku available, executing task")
             executeTask(context, taskId)
         } else {
-            Logger.w(TAG, "Shizuku not available, showing notification")
-            manager.showNotification(
-                taskId = taskId,
-                title = "定时任务等待执行",
-                message = "等待 Shizuku 连接"
-            )
+            Logger.w(TAG, "Shizuku not available")
+            manager.showNotification(taskId, "等待执行", "等待 Shizuku 连接")
         }
     }
 
@@ -53,16 +48,9 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
         val manager = ScheduledTaskManager.getInstance(context)
         val task = manager.getTaskById(taskId)
 
-        if (task == null) {
-            Logger.w(TAG, "Task not found when executing: $taskId")
-            return
-        }
+        if (task == null) return
 
-        manager.showNotification(
-            taskId = taskId,
-            title = "定时任务执行中",
-            message = "正在执行任务"
-        )
+        manager.showNotification(taskId, "执行中", "正在执行任务")
 
         val serviceIntent = Intent(context, ScheduledTaskWorker::class.java).apply {
             putExtra(ScheduledTaskWorker.KEY_TASK_ID, taskId)

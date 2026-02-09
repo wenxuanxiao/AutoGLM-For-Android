@@ -33,10 +33,7 @@ class ScheduledTaskWorker : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val taskId = intent?.getStringExtra(KEY_TASK_ID)
-
-        if (taskId == null) {
-            Logger.e(TAG, "No task ID in intent")
+        val taskId = intent?.getStringExtra(KEY_TASK_ID) ?: run {
             stopSelf()
             return START_NOT_STICKY
         }
@@ -80,7 +77,7 @@ class ScheduledTaskWorker : Service() {
             val result = doExecuteTask(task)
 
             if (result.success) {
-                Logger.i(TAG, "Task executed successfully: ${task.name}")
+                Logger.i(TAG, "Task executed successfully")
                 manager.updateLastExecuted(taskId)
                 manager.cancelNotification(taskId)
                 manager.showNotification(taskId, "执行成功", "任务已完成")
