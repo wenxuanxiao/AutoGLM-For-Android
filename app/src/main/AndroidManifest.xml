@@ -144,6 +144,16 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Scheduled Task Worker Service -->
+        <service
+            android:name=".scheduled.ScheduledTaskWorker"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="scheduled_task" />
+        </service>
     </application>
 
 </manifest>

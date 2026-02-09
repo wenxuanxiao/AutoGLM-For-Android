@@ -1,46 +1,66 @@
 package com.kevinluo.autoglm.scheduled
 
-import android.content.Context
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import com.kevinluo.autoglm.action.ActionHandler
-import com.kevinluo.autoglm.agent.AgentConfig
-import com.kevinluo.autoglm.agent.PhoneAgent
+import android.app.Service
+import android.content.Intent
+import android.os.IBinder
 import com.kevinluo.autoglm.agent.TaskResult
 import com.kevinluo.autoglm.app.AppResolver
-import com.kevinluo.autoglm.device.DeviceExecutor
 import com.kevinluo.autoglm.history.HistoryManager
 import com.kevinluo.autoglm.input.TextInputManager
 import com.kevinluo.autoglm.model.ModelClient
-import com.kevinluo.autoglm.screenshot.ScreenshotService
 import com.kevinluo.autoglm.settings.SettingsManager
 import com.kevinluo.autoglm.ui.FloatingWindowService
 import com.kevinluo.autoglm.util.HumanizedSwipeGenerator
 import com.kevinluo.autoglm.util.Logger
 import dev.rikka.shizuku.Shizuku
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
-/**
- * 定时任务执行 Worker
- *
- * 使用 WorkManager 在后台执行定时任务
- */
-class ScheduledTaskWorker(
-    private val appContext: Context,
-    params: WorkerParameters
-) : CoroutineWorker(appContext, params) {
+class ScheduledTaskWorker : Service() {
 
     companion object {
         private const val TAG = "ScheduledTaskWorker"
         const val KEY_TASK_ID = "key_task_id"
     }
 
-    override suspend fun doWork(): Result {
-        val taskId = inputData.getString(KEY_TASK_ID)
-            ?: return Result.failure()
+    private val serviceScope = CoroutineScope(Dispatchers.IO + Job())
+    private var isRunning = false
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val taskId = intent?.getStringExtra(KEY_TASK_ID)
+
+        if (taskId == null) {
+            Logger.e(TAG, "No task ID in intent")
+            stopSelf()
+            return START_NOT_STICKY
+        }
 
         Logger.d(TAG, "Starting scheduled task: $taskId")
 
-        val manager = ScheduledTaskManager.getInstance(appContext)
+        if (isRunning) {
+            Logger.w(TAG, "Task already running, ignoring duplicate")
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        isRunning = true
+
+        serviceScope.launch {
+            executeTask(taskId)
+            isRunning = false
+            stopSelf(startId)
+        }
+
+        return START_NOT_STICKY
+    }
+
+    private suspend fun executeTask(taskId: String) {
+        val manager = ScheduledTaskManager.getInstance(this)
         val task = manager.getTaskById(taskId)
 
         if (task == null) {
@@ -50,7 +70,7 @@ class ScheduledTaskWorker(
                 title = "定时任务执行失败",
                 message = "任务未找到"
             )
-            return Result.failure()
+            return
         }
 
         try {
@@ -59,12 +79,12 @@ class ScheduledTaskWorker(
                 manager.showNotification(
                     taskId = taskId,
                     title = "定时任务等待执行",
-                    message = "任务「${task.name}」等待 Shizuku 连接"
+                    message = "任务等待 Shizuku 连接"
                 )
-                return Result.retry()
+                return
             }
 
-            val result = executeTask(task)
+            val result = doExecuteTask(task)
 
             if (result.success) {
                 Logger.i(TAG, "Task executed successfully: ${task.name}")
@@ -73,35 +93,32 @@ class ScheduledTaskWorker(
                 manager.showNotification(
                     taskId = taskId,
                     title = "定时任务执行成功",
-                    message = "任务「${task.name}」已完成"
+                    message = "任务已完成"
                 )
             } else {
-                Logger.e(TAG, "Task execution failed: ${task.name}, message: ${result.message}")
+                Logger.e(TAG, "Task execution failed: ${result.message}")
                 manager.cancelNotification(taskId)
                 manager.showNotification(
                     taskId = taskId,
                     title = "定时任务执行失败",
-                    message = "任务「${task.name}」失败: ${result.message}"
+                    message = result.message
                 )
             }
 
-            return if (result.success) Result.success() else Result.failure()
-
         } catch (e: Exception) {
-            Logger.e(TAG, "Task execution error: ${task.name}", e)
+            Logger.e(TAG, "Task execution error: ${e.message}")
             manager.cancelNotification(taskId)
             manager.showNotification(
                 taskId = taskId,
                 title = "定时任务执行出错",
-                message = "任务「${task.name}」出错: ${e.message}"
+                message = e.message ?: "未知错误"
             )
-            return Result.failure()
         }
     }
 
-    private suspend fun executeTask(task: ScheduledTask): TaskResult {
+    private suspend fun doExecuteTask(task: ScheduledTask): TaskResult {
         return try {
-            val settingsManager = SettingsManager(appContext)
+            val settingsManager = SettingsManager(this)
             val modelConfig = settingsManager.getModelConfig()
             val agentConfig = settingsManager.getAgentConfig()
 
@@ -114,20 +131,20 @@ class ScheduledTaskWorker(
             }
 
             val modelClient = ModelClient(modelConfig)
-            val historyManager = HistoryManager.getInstance(appContext)
-            val appResolver = AppResolver(appContext.packageManager)
+            val historyManager = HistoryManager.getInstance(this)
+            val appResolver = AppResolver(this.packageManager)
             val swipeGenerator = HumanizedSwipeGenerator()
 
             val service = Shizuku.newUserServiceBuilder()
                 .build()
 
             val textInputManager = TextInputManager(service)
-            val deviceExecutor = DeviceExecutor(service)
+            val deviceExecutor = com.kevinluo.autoglm.device.DeviceExecutor(service)
             val screenshotService = ScreenshotService(service) {
                 FloatingWindowService.getInstance()
             }
 
-            val actionHandler = ActionHandler(
+            val actionHandler = com.kevinluo.autoglm.action.ActionHandler(
                 deviceExecutor = deviceExecutor,
                 appResolver = appResolver,
                 swipeGenerator = swipeGenerator,
@@ -135,7 +152,7 @@ class ScheduledTaskWorker(
                 floatingWindowProvider = { FloatingWindowService.getInstance() }
             )
 
-            val phoneAgent = PhoneAgent(
+            val phoneAgent = com.kevinluo.autoglm.agent.PhoneAgent(
                 modelClient = modelClient,
                 actionHandler = actionHandler,
                 screenshotService = screenshotService,
@@ -146,19 +163,25 @@ class ScheduledTaskWorker(
             phoneAgent.run(task.taskDescription)
 
         } catch (e: Shizuku.ServiceNotConnectedException) {
-            Logger.e(TAG, "Shizuku service not connected", e)
+            Logger.e(TAG, "Shizuku service not connected")
             TaskResult(
                 success = false,
                 message = "Shizuku 服务未连接",
                 stepCount = 0
             )
         } catch (e: Exception) {
-            Logger.e(TAG, "Error executing task", e)
+            Logger.e(TAG, "Error executing task: ${e.message}")
             TaskResult(
                 success = false,
                 message = e.message ?: "未知错误",
                 stepCount = 0
             )
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
+        Logger.d(TAG, "Service destroyed")
     }
 }

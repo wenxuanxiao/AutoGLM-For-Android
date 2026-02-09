@@ -120,9 +120,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.runtime)
     
-    // Security for encrypted preferences
+// Security for encrypted preferences
     implementation(libs.androidx.security.crypto)
-    
+
     // OkHttp for API communication
     implementation(libs.okhttp)
     implementation(libs.okhttp.sse)

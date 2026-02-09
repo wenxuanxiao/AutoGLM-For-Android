@@ -3,9 +3,6 @@ package com.kevinluo.autoglm.scheduled
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
 import com.kevinluo.autoglm.util.Logger
 import dev.rikka.shizuku.Shizuku
 
@@ -18,10 +15,11 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "ScheduledTaskReceiver"
+        const val ACTION_TASK_TRIGGER = "com.kevinluo.autoglm.scheduled.TASK_TRIGGER"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val taskId = ScheduledTaskManager.getTaskId(intent)
+        val taskId = intent.getStringExtra(ScheduledTaskWorker.KEY_TASK_ID)
 
         if (taskId == null) {
             Logger.e(TAG, "No task ID in intent")
@@ -72,12 +70,12 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
             isOngoing = true
         )
 
-        val workRequest = OneTimeWorkRequestBuilder<ScheduledTaskWorker>()
-            .setInputData(workDataOf(ScheduledTaskWorker.KEY_TASK_ID to taskId))
-            .build()
+        // 直接启动 Worker 使用 Intent
+        val serviceIntent = Intent(context, ScheduledTaskWorker::class.java).apply {
+            putExtra(ScheduledTaskWorker.KEY_TASK_ID, taskId)
+        }
+        context.startService(serviceIntent)
 
-        WorkManager.getInstance(context).enqueue(workRequest)
-
-        Logger.d(TAG, "Work request enqueued for task: ${task.name}")
+        Logger.d(TAG, "Service started for task: ${task.name}")
     }
 }
