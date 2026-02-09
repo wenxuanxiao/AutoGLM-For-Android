@@ -6,11 +6,6 @@ import android.content.Intent
 import com.kevinluo.autoglm.util.Logger
 import dev.rikka.shizuku.Shizuku
 
-/**
- * 定时任务广播接收器
- *
- * 接收 AlarmManager 发出的定时信号，检查任务状态并触发执行
- */
 class ScheduledTaskReceiver : BroadcastReceiver() {
 
     companion object {
@@ -49,7 +44,7 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
             manager.showNotification(
                 taskId = taskId,
                 title = "定时任务等待执行",
-                message = "任务「${task.name}」等待 Shizuku 连接"
+                message = "等待 Shizuku 连接"
             )
         }
     }
@@ -66,11 +61,9 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
         manager.showNotification(
             taskId = taskId,
             title = "定时任务执行中",
-            message = "正在执行任务「${task.name}」",
-            isOngoing = true
+            message = "正在执行任务"
         )
 
-        // 直接启动 Worker 使用 Intent
         val serviceIntent = Intent(context, ScheduledTaskWorker::class.java).apply {
             putExtra(ScheduledTaskWorker.KEY_TASK_ID, taskId)
         }

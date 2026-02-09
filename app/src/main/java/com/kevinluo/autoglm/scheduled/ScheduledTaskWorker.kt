@@ -8,6 +8,7 @@ import com.kevinluo.autoglm.app.AppResolver
 import com.kevinluo.autoglm.history.HistoryManager
 import com.kevinluo.autoglm.input.TextInputManager
 import com.kevinluo.autoglm.model.ModelClient
+import com.kevinluo.autoglm.screenshot.ScreenshotService
 import com.kevinluo.autoglm.settings.SettingsManager
 import com.kevinluo.autoglm.ui.FloatingWindowService
 import com.kevinluo.autoglm.util.HumanizedSwipeGenerator
@@ -43,7 +44,7 @@ class ScheduledTaskWorker : Service() {
         Logger.d(TAG, "Starting scheduled task: $taskId")
 
         if (isRunning) {
-            Logger.w(TAG, "Task already running, ignoring duplicate")
+            Logger.w(TAG, "Task already running")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -65,22 +66,14 @@ class ScheduledTaskWorker : Service() {
 
         if (task == null) {
             Logger.e(TAG, "Task not found: $taskId")
-            manager.showNotification(
-                taskId = taskId,
-                title = "定时任务执行失败",
-                message = "任务未找到"
-            )
+            manager.showNotification(taskId, "执行失败", "任务未找到")
             return
         }
 
         try {
             if (!Shizuku.isBinding()) {
                 Logger.w(TAG, "Shizuku not available")
-                manager.showNotification(
-                    taskId = taskId,
-                    title = "定时任务等待执行",
-                    message = "任务等待 Shizuku 连接"
-                )
+                manager.showNotification(taskId, "等待执行", "等待 Shizuku 连接")
                 return
             }
 
@@ -90,29 +83,17 @@ class ScheduledTaskWorker : Service() {
                 Logger.i(TAG, "Task executed successfully: ${task.name}")
                 manager.updateLastExecuted(taskId)
                 manager.cancelNotification(taskId)
-                manager.showNotification(
-                    taskId = taskId,
-                    title = "定时任务执行成功",
-                    message = "任务已完成"
-                )
+                manager.showNotification(taskId, "执行成功", "任务已完成")
             } else {
                 Logger.e(TAG, "Task execution failed: ${result.message}")
                 manager.cancelNotification(taskId)
-                manager.showNotification(
-                    taskId = taskId,
-                    title = "定时任务执行失败",
-                    message = result.message
-                )
+                manager.showNotification(taskId, "执行失败", result.message)
             }
 
         } catch (e: Exception) {
             Logger.e(TAG, "Task execution error: ${e.message}")
             manager.cancelNotification(taskId)
-            manager.showNotification(
-                taskId = taskId,
-                title = "定时任务执行出错",
-                message = e.message ?: "未知错误"
-            )
+            manager.showNotification(taskId, "执行出错", e.message ?: "未知错误")
         }
     }
 
@@ -123,11 +104,7 @@ class ScheduledTaskWorker : Service() {
             val agentConfig = settingsManager.getAgentConfig()
 
             if (modelConfig.apiKey == "EMPTY" || modelConfig.baseUrl.isEmpty()) {
-                return TaskResult(
-                    success = false,
-                    message = "API 配置未完成",
-                    stepCount = 0
-                )
+                return TaskResult(success = false, message = "API 配置未完成", stepCount = 0)
             }
 
             val modelClient = ModelClient(modelConfig)
@@ -135,8 +112,7 @@ class ScheduledTaskWorker : Service() {
             val appResolver = AppResolver(this.packageManager)
             val swipeGenerator = HumanizedSwipeGenerator()
 
-            val service = Shizuku.newUserServiceBuilder()
-                .build()
+            val service = Shizuku.newUserServiceBuilder().build()
 
             val textInputManager = TextInputManager(service)
             val deviceExecutor = com.kevinluo.autoglm.device.DeviceExecutor(service)
@@ -164,18 +140,10 @@ class ScheduledTaskWorker : Service() {
 
         } catch (e: Shizuku.ServiceNotConnectedException) {
             Logger.e(TAG, "Shizuku service not connected")
-            TaskResult(
-                success = false,
-                message = "Shizuku 服务未连接",
-                stepCount = 0
-            )
+            TaskResult(success = false, message = "Shizuku 服务未连接", stepCount = 0)
         } catch (e: Exception) {
             Logger.e(TAG, "Error executing task: ${e.message}")
-            TaskResult(
-                success = false,
-                message = e.message ?: "未知错误",
-                stepCount = 0
-            )
+            TaskResult(success = false, message = e.message ?: "未知错误", stepCount = 0)
         }
     }
 
