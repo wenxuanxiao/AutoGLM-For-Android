@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - debugAutoGLM
   pull_request:
     branches:
       - main
