@@ -93,11 +93,14 @@ class SettingsManager(private val context: Context) {
         
         // Custom system prompt keys
         private const val KEY_CUSTOM_SYSTEM_PROMPT_CN = "custom_system_prompt_cn"
-        private const val KEY_CUSTOM_SYSTEM_PROMPT_EN = "custom_system_prompt_en"
-        
+private const val KEY_CUSTOM_SYSTEM_PROMPT_EN = "custom_system_prompt_en"
+
         // Dev profiles import key
         private const val KEY_DEV_PROFILES_IMPORTED = "dev_profiles_imported"
-        
+
+        // Scheduled tasks key
+        private const val KEY_SCHEDULED_TASKS = "scheduled_tasks"
+
         // Default values
         private val DEFAULT_MODEL_CONFIG = ModelConfig()
         private val DEFAULT_AGENT_CONFIG = AgentConfig()
@@ -693,8 +696,6 @@ class SettingsManager(private val context: Context) {
     }
 
     // ==================== Scheduled Tasks ====================
-
-    private const val KEY_SCHEDULED_TASKS = "scheduled_tasks"
 
     fun getScheduledTasks(): List<ScheduledTask> {
         val json = prefs.getString(KEY_SCHEDULED_TASKS, null) ?: return emptyList()

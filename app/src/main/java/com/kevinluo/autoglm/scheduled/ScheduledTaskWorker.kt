@@ -3,9 +3,11 @@ package com.kevinluo.autoglm.scheduled
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.kevinluo.autoglm.ComponentManager
+import com.kevinluo.autoglm.action.ActionHandler
 import com.kevinluo.autoglm.agent.AgentConfig
 import com.kevinluo.autoglm.agent.PhoneAgent
+import com.kevinluo.autoglm.agent.TaskResult
+import com.kevinluo.autoglm.app.AppResolver
 import com.kevinluo.autoglm.device.DeviceExecutor
 import com.kevinluo.autoglm.history.HistoryManager
 import com.kevinluo.autoglm.input.TextInputManager
@@ -23,9 +25,9 @@ import dev.rikka.shizuku.Shizuku
  * 使用 WorkManager 在后台执行定时任务
  */
 class ScheduledTaskWorker(
-    context: Context,
+    private val appContext: Context,
     params: WorkerParameters
-) : CoroutineWorker(context, params) {
+) : CoroutineWorker(appContext, params) {
 
     companion object {
         private const val TAG = "ScheduledTaskWorker"
@@ -33,11 +35,12 @@ class ScheduledTaskWorker(
     }
 
     override suspend fun doWork(): Result {
-        val taskId = inputData.getString(KEY_TASK_ID) ?: return Result.failure()
+        val taskId = inputData.getString(KEY_TASK_ID)
+            ?: return Result.failure()
 
         Logger.d(TAG, "Starting scheduled task: $taskId")
 
-        val manager = ScheduledTaskManager.getInstance(applicationContext)
+        val manager = ScheduledTaskManager.getInstance(appContext)
         val task = manager.getTaskById(taskId)
 
         if (task == null) {
@@ -96,14 +99,14 @@ class ScheduledTaskWorker(
         }
     }
 
-    private suspend fun executeTask(task: ScheduledTask): com.kevinluo.autoglm.agent.TaskResult {
+    private suspend fun executeTask(task: ScheduledTask): TaskResult {
         return try {
-            val settingsManager = SettingsManager(applicationContext)
+            val settingsManager = SettingsManager(appContext)
             val modelConfig = settingsManager.getModelConfig()
             val agentConfig = settingsManager.getAgentConfig()
 
             if (modelConfig.apiKey == "EMPTY" || modelConfig.baseUrl.isEmpty()) {
-                return com.kevinluo.autoglm.agent.TaskResult(
+                return TaskResult(
                     success = false,
                     message = "API 配置未完成",
                     stepCount = 0
@@ -111,8 +114,8 @@ class ScheduledTaskWorker(
             }
 
             val modelClient = ModelClient(modelConfig)
-            val historyManager = HistoryManager.getInstance(applicationContext)
-            val appResolver = com.kevinluo.autoglm.app.AppResolver(applicationContext.packageManager)
+            val historyManager = HistoryManager.getInstance(appContext)
+            val appResolver = AppResolver(appContext.packageManager)
             val swipeGenerator = HumanizedSwipeGenerator()
 
             val service = Shizuku.newUserServiceBuilder()
@@ -124,7 +127,7 @@ class ScheduledTaskWorker(
                 FloatingWindowService.getInstance()
             }
 
-            val actionHandler = com.kevinluo.autoglm.action.ActionHandler(
+            val actionHandler = ActionHandler(
                 deviceExecutor = deviceExecutor,
                 appResolver = appResolver,
                 swipeGenerator = swipeGenerator,
@@ -144,14 +147,14 @@ class ScheduledTaskWorker(
 
         } catch (e: Shizuku.ServiceNotConnectedException) {
             Logger.e(TAG, "Shizuku service not connected", e)
-            com.kevinluo.autoglm.agent.TaskResult(
+            TaskResult(
                 success = false,
                 message = "Shizuku 服务未连接",
                 stepCount = 0
             )
         } catch (e: Exception) {
             Logger.e(TAG, "Error executing task", e)
-            com.kevinluo.autoglm.agent.TaskResult(
+            TaskResult(
                 success = false,
                 message = e.message ?: "未知错误",
                 stepCount = 0
