@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url 'https://maven.rikkabu.xyz/releases' }
+        maven { url = uri("https://maven.rikkabu.xyz/releases") }
     }
 }
 
