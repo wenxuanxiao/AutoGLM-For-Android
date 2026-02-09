@@ -103,42 +103,44 @@ android.applicationVariants.all {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.cardview)
-    implementation(libs.androidx.activity)
-    implementation(libs.androidx.constraintlayout)
-    implementation(libs.shizuku.api)
-    implementation(libs.shizuku.provider)
-    
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.activity:activity:1.8.2")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+
+    // Shizuku for system-level operations
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
+
     // Kotlin Coroutines for async operations
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.coroutines.android)
-    
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     // Lifecycle & ViewModel
-    implementation(libs.androidx.lifecycle.viewmodel)
-    implementation(libs.androidx.lifecycle.runtime)
-    
-// Security for encrypted preferences
-    implementation(libs.androidx.security.crypto)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+
+    // Security for encrypted preferences
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // OkHttp for API communication
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.sse)
-    implementation(libs.okhttp.logging)
-    
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     // Retrofit for API communication
-    implementation(libs.retrofit)
-    
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+
     // Kotlin Serialization for JSON parsing
-    implementation(libs.kotlinx.serialization.json)
-    
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+
     // Testing
-    testImplementation(libs.junit)
-    testImplementation(libs.kotest.runner.junit5)
-    testImplementation(libs.kotest.property)
-    testImplementation(libs.kotest.assertions.core)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-property:5.8.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
