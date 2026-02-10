@@ -3,6 +3,7 @@ package com.kevinluo.autoglm.scheduled
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import com.kevinluo.autoglm.IUserService
 import com.kevinluo.autoglm.agent.TaskResult
 import com.kevinluo.autoglm.app.AppResolver
 import com.kevinluo.autoglm.history.HistoryManager
@@ -13,7 +14,7 @@ import com.kevinluo.autoglm.settings.SettingsManager
 import com.kevinluo.autoglm.ui.FloatingWindowService
 import com.kevinluo.autoglm.util.HumanizedSwipeGenerator
 import com.kevinluo.autoglm.util.Logger
-import dev.rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,7 +69,7 @@ class ScheduledTaskWorker : Service() {
         }
 
         try {
-            if (!Shizuku.isBinding()) {
+            if (!Shizuku.pingBinder()) {
                 Logger.w(TAG, "Shizuku not available")
                 manager.showNotification(taskId, "等待执行", "等待 Shizuku 连接")
                 return
@@ -109,7 +110,7 @@ class ScheduledTaskWorker : Service() {
             val appResolver = AppResolver(this.packageManager)
             val swipeGenerator = HumanizedSwipeGenerator()
 
-            val service = Shizuku.newUserServiceBuilder().build()
+            val service = IUserService.Stub.asInterface(Shizuku.getBinder())
 
             val textInputManager = TextInputManager(service)
             val deviceExecutor = com.kevinluo.autoglm.device.DeviceExecutor(service)
@@ -135,9 +136,6 @@ class ScheduledTaskWorker : Service() {
 
             phoneAgent.run(task.taskDescription)
 
-        } catch (e: Shizuku.ServiceNotConnectedException) {
-            Logger.e(TAG, "Shizuku service not connected")
-            TaskResult(success = false, message = "Shizuku 服务未连接", stepCount = 0)
         } catch (e: Exception) {
             Logger.e(TAG, "Error executing task: ${e.message}")
             TaskResult(success = false, message = e.message ?: "未知错误", stepCount = 0)

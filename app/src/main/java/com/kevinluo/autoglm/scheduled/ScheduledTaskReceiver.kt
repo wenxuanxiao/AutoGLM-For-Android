@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.kevinluo.autoglm.util.Logger
-import dev.rikka.shizuku.Shizuku
+import rikka.shizuku.Shizuku
 
 class ScheduledTaskReceiver : BroadcastReceiver() {
 
@@ -35,7 +35,7 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
             return
         }
 
-        if (Shizuku.isBinding()) {
+        if (Shizuku.pingBinder()) {
             Logger.d(TAG, "Shizuku available, executing task")
             executeTask(context, taskId)
         } else {
