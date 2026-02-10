@@ -13,7 +13,7 @@ class ScheduledTaskReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val taskId = intent.getStringExtra(ScheduledTaskWorker.KEY_TASK_ID)
+        val taskId = ScheduledTaskManager.getTaskId(intent)
 
         if (taskId == null) {
             Logger.e(TAG, "No task ID in intent")
