@@ -111,8 +111,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     // Shizuku for system-level operations
-    implementation("com.github.RikkaApps.Shizuku:api:13.5.4")
-    implementation("com.github.RikkaApps.Shizuku:provider:13.5.4")
+    implementation("com.github.RikkaApps.Shizuku:Shizuku:v13.5.4")
 
     // Kotlin Coroutines for async operations
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
