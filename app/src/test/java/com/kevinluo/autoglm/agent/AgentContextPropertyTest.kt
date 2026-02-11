@@ -41,7 +41,7 @@ class AgentContextPropertyTest : StringSpec({
         forAll(100, systemPromptArb, userTextArb, assistantContentArb, stepCountArb) { 
             systemPrompt, userText, assistantContent, stepCount ->
             
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Add initial user message (task description)
             context.addUserMessage(userText, null)
@@ -63,7 +63,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(1..15)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Add initial user message
             context.addUserMessage("task", null)
@@ -90,7 +90,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(1..10)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Simulate multiple steps with user messages (screenshots) and assistant responses
             repeat(stepCount) { step ->
@@ -114,7 +114,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(0..10)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Add some messages
             repeat(stepCount) { step ->
@@ -150,7 +150,7 @@ class AgentContextPropertyTest : StringSpec({
         forAll(100, systemPromptArb, userTextArb, imageDataArb, stepCountArb) { 
             systemPrompt, userText, imageData, stepCount ->
             
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Simulate multiple steps, each with a user message containing an image
             repeat(stepCount) { step ->
@@ -177,7 +177,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(3..8)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Add multiple user messages with images
             repeat(stepCount) { step ->
@@ -203,7 +203,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(2..6)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Add user messages with unique text and images
             repeat(stepCount) { step ->
@@ -241,7 +241,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(1..20)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Populate context with messages simulating a completed task
             repeat(stepCount) { step ->
@@ -273,7 +273,7 @@ class AgentContextPropertyTest : StringSpec({
         val stepCountArb = Arb.int(1..15)
         
         forAll(100, systemPromptArb, stepCountArb) { systemPrompt, stepCount ->
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Simulate first task
             repeat(stepCount) { step ->
@@ -311,7 +311,7 @@ class AgentContextPropertyTest : StringSpec({
         forAll(100, systemPromptArb, userCountArb, assistantCountArb) { 
             systemPrompt, userCount, assistantCount ->
             
-            val context = AgentContext(systemPrompt)
+            val context = AgentContext(systemPrompt, 100)
             
             // Add various user messages
             repeat(userCount) { i ->

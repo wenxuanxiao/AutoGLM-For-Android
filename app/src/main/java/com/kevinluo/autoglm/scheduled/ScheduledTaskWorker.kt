@@ -44,6 +44,7 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
     private var currentStepNumber = 0
     private var currentThinking = ""
     private var floatingService: FloatingWindowService? = null
+    private var phoneAgent: PhoneAgent? = null
 
     private val userServiceArgs = Shizuku.UserServiceArgs(
         ComponentName(
@@ -125,17 +126,40 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
                 Logger.e(TAG, "Floating window service failed to initialize")
             }
 
-            val result = doExecuteTask(task)
+            val agent = doExecuteTask(task)
+            phoneAgent = agent
 
-            if (result.success) {
+            floatingService?.setStopTaskCallback {
+                Logger.d(TAG, "Stop callback invoked")
+                phoneAgent?.cancel()
+            }
+
+            floatingService?.setPauseTaskCallback {
+                Logger.d(TAG, "Pause callback invoked")
+                phoneAgent?.pause()
+            }
+
+            floatingService?.setResumeTaskCallback {
+                Logger.d(TAG, "Resume callback invoked")
+                phoneAgent?.resume()
+            }
+
+            agent?.run(task.taskDescription)
+
+            val result = agent?.getLastResult()
+            if (result != null && result.success) {
                 Logger.i(TAG, "Task executed successfully")
                 manager.updateLastExecuted(taskId)
                 manager.cancelNotification(taskId)
                 FloatingWindowService.getInstance()?.showResult("任务已完成", true)
-            } else {
+            } else if (result != null) {
                 Logger.e(TAG, "Task execution failed: ${result.message}")
                 manager.cancelNotification(taskId)
                 FloatingWindowService.getInstance()?.showResult(result.message, false)
+            } else {
+                Logger.e(TAG, "Task execution failed: agent is null")
+                manager.cancelNotification(taskId)
+                FloatingWindowService.getInstance()?.showResult("任务执行失败", false)
             }
 
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -156,14 +180,14 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
         }
     }
 
-    private suspend fun doExecuteTask(task: ScheduledTask): TaskResult {
+    private suspend fun doExecuteTask(task: ScheduledTask): PhoneAgent? {
         return try {
             val settingsManager = SettingsManager(this)
             val modelConfig = settingsManager.getModelConfig()
             val agentConfig = settingsManager.getAgentConfig()
 
             if (modelConfig.apiKey == "EMPTY" || modelConfig.baseUrl.isEmpty()) {
-                return TaskResult(success = false, message = "API 配置未完成", stepCount = 0)
+                return null
             }
 
             val modelClient = ModelClient(modelConfig)
@@ -194,16 +218,17 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
                 config = agentConfig,
                 historyManager = historyManager
             )
+            this.phoneAgent = phoneAgent
             phoneAgent.setListener(this)
 
-            phoneAgent.run(task.taskDescription)
+            phoneAgent
 
         } catch (e: kotlinx.coroutines.CancellationException) {
             Logger.w(TAG, "Task execution cancelled")
             throw e
         } catch (e: Exception) {
             Logger.e(TAG, "Error executing task: ${e.message}")
-            TaskResult(success = false, message = e.message ?: "未知错误", stepCount = 0)
+            return null
         } finally {
             unbindUserService()
         }

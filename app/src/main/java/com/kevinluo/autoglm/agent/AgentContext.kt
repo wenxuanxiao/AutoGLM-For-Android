@@ -5,9 +5,14 @@ import com.kevinluo.autoglm.model.ChatMessage
 /**
  * Manages the conversation context for the phone agent.
  * Handles message accumulation, image cleanup, and context reset.
- * 
+ *
+ * Uses a sliding window to limit the number of messages sent to the model,
+ * preserving the system prompt and the most recent messages.
+ *
+ * @param systemPrompt The system prompt to use for the conversation
+ * @param maxMessages Maximum number of messages to keep (including system prompt)
  */
-class AgentContext(private val systemPrompt: String) {
+class AgentContext(private val systemPrompt: String, private val maxMessages: Int = 20) {
     
     private val messages: MutableList<ChatMessage> = mutableListOf()
     
@@ -15,38 +20,48 @@ class AgentContext(private val systemPrompt: String) {
         // Initialize with system prompt (Requirement 8.1)
         messages.add(ChatMessage.System(systemPrompt))
     }
-    
+
     /**
      * Adds a user message to the context.
      * Before adding, removes images from all previous user messages to save memory (Requirement 8.3).
-     * 
+     *
      * @param text The text content of the user message
      * @param imageBase64 Optional base64-encoded image data
      */
     fun addUserMessage(text: String, imageBase64: String?) {
         // Remove images from previous user messages (Requirement 8.3)
         removeImagesFromHistory()
-        
+
         // Add the new user message
         messages.add(ChatMessage.User(text, imageBase64))
     }
-    
+
     /**
      * Adds an assistant message to the context (Requirement 8.2).
-     * 
+     *
      * @param content The content of the assistant's response
      */
     fun addAssistantMessage(content: String) {
         messages.add(ChatMessage.Assistant(content))
     }
-    
+
     /**
      * Returns a copy of all messages in the context.
-     * 
+     * Uses a sliding window to keep only the most recent messages.
+     *
      * @return List of all chat messages in order
      */
     fun getMessages(): List<ChatMessage> {
-        return messages.toList()
+        val result = messages.toList()
+        if (maxMessages <= 0) {
+            return result
+        }
+        // Sliding window: always keep system prompt, add recent messages
+        if (result.size <= maxMessages) {
+            return result
+        }
+        // Keep system prompt + most recent (maxMessages - 1) messages
+        return listOf(result.first()) + result.takeLast(maxMessages - 1)
     }
     
     /**

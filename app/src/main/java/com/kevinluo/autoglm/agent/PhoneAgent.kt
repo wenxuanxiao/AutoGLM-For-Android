@@ -25,7 +25,8 @@ data class AgentConfig(
     val maxSteps: Int = 0,
     val language: String = "cn",
     val verbose: Boolean = true,
-    val screenshotDelayMs: Long = 2000L
+    val screenshotDelayMs: Long = 2000L,
+    val maxMessages: Int = 20
 )
 
 /**
@@ -97,6 +98,7 @@ class PhoneAgent(
     private val actionExecuted: AtomicBoolean = AtomicBoolean(false)  // Track if action has been executed in current step
     private var listener: PhoneAgentListener? = null
     private var currentStepNumber: Int = 0
+    private var lastResult: TaskResult? = null
 
     /**
      * Gets the cancellation message based on language setting.
@@ -246,7 +248,7 @@ class PhoneAgent(
 
         // Initialize context with system prompt based on language setting
         val systemPrompt = SystemPrompts.getPrompt(config.language)
-        context.set(AgentContext(systemPrompt))
+        context.set(AgentContext(systemPrompt, config.maxMessages))
 
         // Start history recording
         historyManager?.startTask(task)
@@ -993,7 +995,7 @@ Please re-analyze the current screenshot and output correct coordinates (within 
 
             // Initialize context with system prompt based on language setting
             val systemPrompt = SystemPrompts.getPrompt(config.language)
-            context.set(AgentContext(systemPrompt))
+            context.set(AgentContext(systemPrompt, config.maxMessages))
             currentStepNumber = 0
             // Reset cancelled flag only when starting a new task (first step)
             cancelled.set(false)
@@ -1112,9 +1114,11 @@ Please re-analyze the current screenshot and output correct coordinates (within 
      */
     fun setSystemPrompt(prompt: String) {
         if (state.get() == AgentState.IDLE) {
-            context.set(AgentContext(prompt))
+            context.set(AgentContext(prompt, config.maxMessages))
         }
     }
+
+    fun getLastResult(): TaskResult? = lastResult
 
     // Companion object placed at the bottom following code style guidelines (Requirement 3.1)
     companion object {
