@@ -497,7 +497,40 @@ class PhoneAgent(
             listener?.onScreenshotStarted()
             val screenshot = screenshotService.capture()
             listener?.onScreenshotCompleted()
-            Logger.logScreenshot(screenshot.width, screenshot.height, screenshot.isSensitive)
+
+            // Check if screenshot is empty and retry up to 3 times
+            var finalScreenshot = screenshot
+            if (screenshot.base64Data.isNullOrBlank()) {
+                Logger.w(TAG, "Screenshot is empty, retrying up to 3 times...")
+                var retryCount = 0
+                while (retryCount < 3 && (finalScreenshot.base64Data.isNullOrBlank())) {
+                    retryCount++
+                    kotlinx.coroutines.delay(2000)
+                    Logger.d(TAG, "Screenshot retry $retryCount/3")
+                    finalScreenshot = screenshotService.capture()
+                }
+
+                if (finalScreenshot.base64Data.isNullOrBlank()) {
+                    Logger.e(TAG, "Screenshot still empty after 3 retries, failing step")
+                    historyManager?.recordStep(
+                        stepNumber = currentStepNumber,
+                        thinking = "",
+                        action = null,
+                        actionDescription = "截图失败",
+                        success = false,
+                        message = "无法捕获屏幕截图（已重试3次）"
+                    )
+                    return StepResult(
+                        success = false,
+                        finished = false,
+                        action = null,
+                        thinking = "",
+                        message = "无法捕获屏幕截图（已重试3次）"
+                    )
+                }
+                Logger.d(TAG, "Screenshot retry successful on attempt $retryCount")
+            }
+            Logger.logScreenshot(finalScreenshot.width, finalScreenshot.height, finalScreenshot.isSensitive)
 
             // Check cancellation after screenshot
             if (cancelled.get()) {
@@ -526,7 +559,7 @@ class PhoneAgent(
             }
 
             // Store screenshot for history recording
-            historyManager?.setCurrentScreenshot(screenshot.base64Data, screenshot.width, screenshot.height)
+            historyManager?.setCurrentScreenshot(finalScreenshot.base64Data, finalScreenshot.width, finalScreenshot.height)
 
             // Build user message
             val userText = when {
@@ -536,7 +569,7 @@ class PhoneAgent(
             }
 
             // Add user message with screenshot to context
-            ctx.addUserMessage(userText, screenshot.base64Data)
+            ctx.addUserMessage(userText, finalScreenshot.base64Data)
 
             // Request model response
             Logger.d(TAG, "Requesting model response...")

@@ -234,6 +234,7 @@
     <string name="scheduled_task_time">执行时间</string>
     <string name="scheduled_task_repeat">重复类型</string>
     <string name="scheduled_task_repeat_once">仅一次</string>
+    <string name="scheduled_task_repeat_hourly">每小时</string>
     <string name="scheduled_task_repeat_daily">每天</string>
     <string name="scheduled_task_repeat_weekly">每周</string>
     <string name="scheduled_task_weekdays">星期</string>

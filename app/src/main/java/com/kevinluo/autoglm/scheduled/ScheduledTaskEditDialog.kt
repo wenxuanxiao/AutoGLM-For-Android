@@ -103,6 +103,7 @@ class ScheduledTaskEditDialog(
 
             when (task.repeatType) {
                 RepeatType.ONCE -> repeatTypeGroup.check(R.id.repeatOnce)
+                RepeatType.HOURLY -> repeatTypeGroup.check(R.id.repeatHourly)
                 RepeatType.DAILY -> repeatTypeGroup.check(R.id.repeatDaily)
                 RepeatType.WEEKLY -> {
                     repeatTypeGroup.check(R.id.repeatWeekly)
@@ -171,6 +172,7 @@ class ScheduledTaskEditDialog(
         val minute = minuteStr.toIntOrNull()?.coerceIn(0, 59) ?: 0
 
         val repeatType = when (repeatTypeGroup.checkedRadioButtonId) {
+            R.id.repeatHourly -> RepeatType.HOURLY
             R.id.repeatDaily -> RepeatType.DAILY
             R.id.repeatWeekly -> RepeatType.WEEKLY
             else -> RepeatType.ONCE

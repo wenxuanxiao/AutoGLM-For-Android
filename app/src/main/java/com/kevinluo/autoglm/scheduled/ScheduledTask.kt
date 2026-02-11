@@ -89,6 +89,7 @@ data class ScheduledTask(
     fun getRepeatTypeDescription(): String {
         return when (repeatType) {
             RepeatType.ONCE -> "仅一次"
+            RepeatType.HOURLY -> "每小时"
             RepeatType.DAILY -> "每天"
             RepeatType.WEEKLY -> {
                 val daysText = repeatDays.sorted().joinToString("、") { getWeekdayShortName(it) }
@@ -136,6 +137,7 @@ data class ScheduledTaskResult(
  */
 enum class RepeatType {
     ONCE,     // 仅一次
+    HOURLY,   // 每小时
     DAILY,    // 每天
     WEEKLY,   // 每周特定天
 }

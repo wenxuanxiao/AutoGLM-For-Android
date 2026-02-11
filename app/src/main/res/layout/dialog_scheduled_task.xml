@@ -151,7 +151,15 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/scheduled_task_repeat_once"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
+
+            <com.google.android.material.radiobutton.MaterialRadioButton
+                android:id="@+id/repeatHourly"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/scheduled_task_repeat_hourly"
+                android:textSize="13sp" />
 
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/repeatDaily"
@@ -159,7 +167,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/scheduled_task_repeat_daily"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
             <com.google.android.material.radiobutton.MaterialRadioButton
                 android:id="@+id/repeatWeekly"
@@ -167,7 +175,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/scheduled_task_repeat_weekly"
-                android:textSize="14sp" />
+                android:textSize="13sp" />
 
         </RadioGroup>
 
