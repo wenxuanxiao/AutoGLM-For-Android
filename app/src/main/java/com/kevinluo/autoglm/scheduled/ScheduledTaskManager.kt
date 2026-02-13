@@ -220,7 +220,11 @@ class ScheduledTaskManager(private val context: Context) {
                 }
             }
             RepeatType.HOURLY -> {
-                calendar.add(Calendar.HOUR_OF_DAY, 1)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                while (calendar.timeInMillis <= fromTime) {
+                    calendar.add(Calendar.HOUR_OF_DAY, 1)
+                }
                 calendar.timeInMillis
             }
             RepeatType.DAILY -> {

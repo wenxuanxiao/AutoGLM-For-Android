@@ -574,7 +574,7 @@ class PhoneAgent(
             // Request model response
             Logger.d(TAG, "Requesting model response...")
 
-            val modelResult = modelClient.request(ctx.getMessages())
+            val modelResult = modelClient.request(ctx.getMessagesForRequest())
 
             Logger.d(TAG, "向模型发送的请求用户文本为：${userText}")
 
@@ -667,7 +667,7 @@ class PhoneAgent(
                             if (cancelled.get() || paused.get()) break
 
                             // Resend the same request (context still has the user message with screenshot)
-                            val retryResult = modelClient.request(ctx.getMessages())
+                            val retryResult = modelClient.request(ctx.getMessagesForRequest())
 
                             if (cancelled.get() || paused.get()) break
 

@@ -44,6 +44,8 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
     private var currentStepNumber = 0
     private var currentThinking = ""
     private var floatingService: FloatingWindowService? = null
+    private var phoneAgent: PhoneAgent? = null
+    private var isCancelled = false
 
     private val userServiceArgs = Shizuku.UserServiceArgs(
         ComponentName(
@@ -84,22 +86,24 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
     }
 
     private suspend fun executeTask(taskId: String) {
+        val manager = ScheduledTaskManager.getInstance(this)
+        val task = manager.getTaskById(taskId)
+
+        if (task == null) {
+            Logger.e(TAG, "Task not found: $taskId")
+            manager.showNotification(taskId, "执行失败", "任务未找到")
+            manager.updateLastExecuted(taskId)
+            return
+        }
+
+        if (!Shizuku.pingBinder()) {
+            Logger.w(TAG, "Shizuku not available")
+            manager.showNotification(taskId, "等待执行", "等待 Shizuku 连接")
+            manager.updateLastExecuted(taskId)
+            return
+        }
+
         try {
-            val manager = ScheduledTaskManager.getInstance(this)
-            val task = manager.getTaskById(taskId)
-
-            if (task == null) {
-                Logger.e(TAG, "Task not found: $taskId")
-                manager.showNotification(taskId, "执行失败", "任务未找到")
-                return
-            }
-
-            if (!Shizuku.pingBinder()) {
-                Logger.w(TAG, "Shizuku not available")
-                manager.showNotification(taskId, "等待执行", "等待 Shizuku 连接")
-                return
-            }
-
             // 启动浮窗服务
             Logger.d(TAG, "Starting floating window service for scheduled task")
             val intent = Intent(this, FloatingWindowService::class.java)
@@ -116,11 +120,27 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
 
             if (floatingService != null) {
                 Logger.d(TAG, "Floating window service initialized after ${waitCount * 100}ms")
+
+                val service = floatingService!!
+
+                // 设置停止回调
+                service.setStopTaskCallback {
+                    Logger.d(TAG, "Stop callback invoked")
+                    isCancelled = true
+                    phoneAgent?.cancel()
+                }
+
+                // 设置暂停回调
+                service.setPauseTaskCallback {
+                    Logger.d(TAG, "Pause callback invoked")
+                    phoneAgent?.pause()
+                }
+
                 currentStepNumber = 0
                 currentThinking = ""
-                floatingService!!.updateStatus(TaskStatus.RUNNING)
-                floatingService!!.updateStepNumber(0)
-                floatingService!!.show()
+                service.updateStatus(TaskStatus.RUNNING)
+                service.updateStepNumber(0)
+                service.show()
             } else {
                 Logger.e(TAG, "Floating window service failed to initialize")
             }
@@ -134,23 +154,29 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
                 FloatingWindowService.getInstance()?.showResult("任务已完成", true)
             } else {
                 Logger.e(TAG, "Task execution failed: ${result.message}")
+                manager.updateLastExecuted(taskId)
                 manager.cancelNotification(taskId)
                 FloatingWindowService.getInstance()?.showResult(result.message, false)
             }
 
         } catch (e: kotlinx.coroutines.CancellationException) {
             Logger.w(TAG, "Task execution cancelled")
-            FloatingWindowService.getInstance()?.showResult("任务已取消", false)
+            try {
+                manager.updateLastExecuted(taskId)
+                FloatingWindowService.getInstance()?.showResult("任务已取消", false)
+            } catch (ignore: Exception) {
+            }
             throw e
         } catch (e: Exception) {
             Logger.e(TAG, "Task execution error: ${e.message}")
             try {
-                val manager = ScheduledTaskManager.getInstance(this)
+                manager.updateLastExecuted(taskId)
                 manager.cancelNotification(taskId)
                 FloatingWindowService.getInstance()?.showResult(e.message ?: "未知错误", false)
             } catch (ignore: Exception) {
             }
         } finally {
+            this.phoneAgent = null
             isRunning = false
             stopSelf()
         }
@@ -194,6 +220,7 @@ class ScheduledTaskWorker : Service(), PhoneAgentListener {
                 config = agentConfig,
                 historyManager = historyManager
             )
+            this.phoneAgent = phoneAgent
             phoneAgent.setListener(this)
 
             phoneAgent.run(task.taskDescription)
